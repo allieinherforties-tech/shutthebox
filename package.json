@@ -1,0 +1,10 @@
+{
+  "name": "shutthebox",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shut the Box · The Daily Dice Challenge — static web rebuild",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}

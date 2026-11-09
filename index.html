@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#1F4D3D" />
+<meta name="description" content="Shut the Box · The Daily Dice Challenge. Roll, close tiles, and shut the box. Same dice for everyone each day. Challenge a friend with one link." />
+<title>Shut the Box · The Daily Dice Challenge</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='12' fill='%236B4A24'/%3E%3Crect x='10' y='10' width='44' height='44' rx='9' fill='%23F1DFB4'/%3E%3Ccircle cx='22' cy='22' r='5' fill='%23C9A24B'/%3E%3Ccircle cx='42' cy='22' r='5' fill='%23C9A24B'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23C9A24B'/%3E%3Ccircle cx='22' cy='42' r='5' fill='%23C9A24B'/%3E%3Ccircle cx='42' cy='42' r='5' fill='%23C9A24B'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ HOME ============ -->
+  <section id="screen-home" class="screen">
+    <div class="intro">
+      <h1 class="brandmark">Shut the Box<span class="pip">.</span></h1>
+      <div class="tagline">The Daily Dice Challenge</div>
+      <div class="streak-chip" id="home-streak" style="display:none"><span class="flame">🔥</span><span id="home-streak-text"></span></div>
+      <div class="btn-stack">
+        <button class="btn btn-primary" id="btn-daily">Play Today’s Challenge</button>
+        <button class="btn btn-ghost" id="btn-casual">Casual Play</button>
+        <button class="btn btn-brass" id="btn-challenge-home">Challenge a Friend</button>
+        <div class="btn-row">
+          <button class="btn-text" id="btn-how">How It Works</button>
+          <button class="btn-text" id="btn-history">History</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section id="screen-how" class="screen">
+    <div class="chrome-header">
+      <button class="back" data-nav="home" aria-label="Back">←</button>
+      <div class="chrome-title">How It Works</div>
+    </div>
+    <div class="intro" style="padding-top:8px;">
+      <div class="rules-card">
+        <div class="rule"><div class="num">1</div><p><b>Roll and add.</b> Roll two dice on every turn. Their total is your target.</p></div>
+        <div class="rule"><div class="num">2</div><p>Tap <b>any tiles that sum to the roll</b>, then close them.</p></div>
+        <div class="rule"><div class="num">3</div><p>Keep rolling. Your turn ends when <b>no tiles can make your roll.</b></p></div>
+        <div class="rule"><div class="num">4</div><p>Score is the <b>tiles left over</b> — lower is better. Close them all to <b>Shut the Box.</b></p></div>
+      </div>
+      <p class="rules-footnote">Once tiles 7, 8 and 9 are down, you may roll a single die instead of two.</p>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btn-how-play">Got it — let’s play</button>
+      <button class="btn-text" data-nav="home">Back to home</button>
+    </div>
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="screen-game" class="screen">
+    <div class="chrome-header">
+      <button class="back" id="btn-game-back" aria-label="Back">←</button>
+      <div class="chrome-title" id="game-title">Shut the Box</div>
+      <div style="flex:1"></div>
+      <div class="day-badge" id="game-day">Day 1</div>
+    </div>
+    <div id="status" class="status-pill">Roll to begin</div>
+    <div class="board-wrap">
+      <div class="board">
+        <div class="board-label">Shut the Box</div>
+        <div class="tiles" id="tiles"></div>
+      </div>
+    </div>
+    <div class="dice-area">
+      <div class="dice" id="dice"></div>
+      <div class="hint" id="hint"></div>
+      <div class="controls" id="controls"></div>
+    </div>
+  </section>
+
+  <!-- ============ RESULT ============ -->
+  <section id="screen-result" class="screen">
+    <div class="result">
+      <div class="result-eyebrow" id="result-day">Daily Challenge</div>
+      <h2 class="result-headline" id="result-headline">Nice game</h2>
+      <div class="result-sub" id="result-sub"></div>
+      <div class="score-tile" id="share-card" aria-label="Share card">
+        <div class="st-eyebrow" id="st-eyebrow">Day 1</div>
+        <div class="st-score" id="st-score">6</div>
+        <div class="st-verdict" id="st-verdict">6 open</div>
+        <div class="st-streak" id="st-streak"></div>
+      </div>
+      <div class="share-note" id="share-note">Spoiler-free — your board stays private until they play.</div>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="btn-share">Share Result</button>
+        <button class="btn btn-brass" id="btn-challenge">Challenge a Friend</button>
+        <button class="btn btn-ghost" id="btn-again">Play Again</button>
+        <button class="btn-text" data-nav="home">Home</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CHALLENGE INTRO (sender) ============ -->
+  <section id="screen-challenge" class="screen">
+    <div class="chrome-header">
+      <button class="back" data-nav="home" aria-label="Back">←</button>
+      <div class="chrome-title">Challenge a Friend</div>
+    </div>
+    <div class="intro" style="padding-top:8px;">
+      <div class="challenge-panel">
+        <p><b>Same dice, one shot.</b> Send a link and your friend plays the exact same dice sequence you played. Then the boards go head-to-head: score, fewest rolls, and most rolls without a miss.</p>
+        <p id="challenge-from-summary"></p>
+        <label class="field-lbl" for="sender-name">Your name (optional)</label>
+        <input class="name-field" id="sender-name" maxlength="24" placeholder="e.g. Allie" autocomplete="nickname" />
+      </div>
+      <div class="spacer"></div>
+      <div class="btn-stack">
+        <button class="btn btn-brass" id="btn-send-challenge">Create Challenge Link</button>
+        <button class="btn btn-ghost" id="btn-challenge-play">Play a Fresh Round to Challenge</button>
+        <button class="btn-text" data-nav="home">Not now</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INVITE (recipient) ============ -->
+  <section id="screen-invite" class="screen">
+    <div class="result">
+      <div class="result-eyebrow" id="invite-eyebrow">Challenge</div>
+      <h2 class="result-headline" id="invite-name">A friend challenges you</h2>
+      <div class="result-sub" id="invite-sub"></div>
+      <div class="score-tile" id="invite-card" aria-label="Their score card">
+        <div class="st-eyebrow" id="invite-tile-eyebrow">Day 1</div>
+        <div class="st-score" id="invite-tile-score">6</div>
+        <div class="st-verdict" id="invite-tile-verdict">6 open</div>
+        <div class="st-streak" id="invite-tile-streak"></div>
+      </div>
+      <div class="share-note">Their board stays hidden until you’ve played the same dice.</div>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="btn-accept">Play the Same Dice</button>
+        <button class="btn-text" id="btn-decline">Not now</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMPARISON ============ -->
+  <section id="screen-compare" class="screen">
+    <div class="result">
+      <div class="result-eyebrow" id="cmp-eyebrow">Head to Head</div>
+      <h2 class="result-headline" id="cmp-headline">You win!</h2>
+      <div class="result-sub" id="cmp-sub"></div>
+      <div class="versus">
+        <div class="side" id="cmp-side-me">
+          <div class="who" id="cmp-who-me">You</div>
+          <div class="mini-strip" id="cmp-strip-me"></div>
+        </div>
+        <div class="side" id="cmp-side-them">
+          <div class="who" id="cmp-who-them">Friend</div>
+          <div class="mini-strip" id="cmp-strip-them"></div>
+        </div>
+      </div>
+      <div class="stat-lines">
+        <div class="stat-line"><span class="s-lbl">Score (lower wins)</span><span class="s-val" id="cmp-me-score"></span><span class="s-val" id="cmp-them-score"></span></div>
+        <div class="stat-line"><span class="s-lbl">Fewest rolls</span><span class="s-val" id="cmp-me-rolls"></span><span class="s-val" id="cmp-them-rolls"></span></div>
+        <div class="stat-line"><span class="s-lbl">Rolls without a miss</span><span class="s-val" id="cmp-me-streak"></span><span class="s-val" id="cmp-them-streak"></span></div>
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="btn-share-comparison">Share Comparison</button>
+        <button class="btn-text" id="btn-cmp-done">Done</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section id="screen-history" class="screen">
+    <div class="chrome-header">
+      <button class="back" data-nav="home" aria-label="Back">←</button>
+      <div class="chrome-title">History</div>
+    </div>
+    <div class="history">
+      <div class="stat-row">
+        <div class="stat-box"><div class="num" id="stat-streak">0</div><div class="lbl">Day streak</div></div>
+        <div class="stat-box"><div class="num" id="stat-best">—</div><div class="lbl">Best score</div></div>
+        <div class="stat-box"><div class="num" id="stat-shuts">0</div><div class="lbl">Shut the Box</div></div>
+      </div>
+      <div class="heat-card">
+        <h3>Last 12 weeks</h3>
+        <div class="heatmap" id="heatmap"></div>
+        <div class="heat-legend" id="heat-legend">
+          <span class="key"><span class="swatch"></span>No game</span>
+          <span class="key"><span class="swatch played"></span>25+</span>
+          <span class="key"><span class="swatch solid"></span>13–24</span>
+          <span class="key"><span class="swatch sharp"></span>1–12</span>
+          <span class="key"><span class="swatch shut"></span>Shut the Box</span>
+        </div>
+      </div>
+      <div class="day-list" id="day-list"></div>
+    </div>
+  </section>
+
+</div>
+<div id="confetti"></div>
+<div id="toast" role="status"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
