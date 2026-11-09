@@ -27,6 +27,8 @@ jobs:
           node-version: 20
       - run: node --test tests/
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - name: Stage site files only
         run: |
           mkdir -p _site
