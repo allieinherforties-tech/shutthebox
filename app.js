@@ -410,6 +410,33 @@ async function endTurn() {
   }
 }
 
+// Gold-and-brass confetti for a perfect game. Particles rise from the board,
+// drift, and fall past the viewport; each removes itself when done.
+function burstConfetti() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const layer = el('confetti');
+  const board = el('tiles').getBoundingClientRect();
+  const colors = ['#D9A02A', '#B8860B', '#F4EFE3', '#1F2A44'];
+  for (let i = 0; i < 64; i++) {
+    const p = document.createElement('div');
+    p.className = 'conf';
+    p.style.background = colors[i % colors.length];
+    p.style.left = (board.left + Math.random() * board.width) + 'px';
+    p.style.top = (board.top + board.height / 2) + 'px';
+    layer.appendChild(p);
+    const dx = (Math.random() - 0.5) * 240;
+    const rise = -(120 + Math.random() * 200);
+    const fall = window.innerHeight - board.top;
+    const rot = (Math.random() - 0.5) * 540;
+    p.animate([
+      { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+      { transform: `translate(${dx}px, ${rise}px) rotate(${rot}deg)`, opacity: 1, offset: 0.45 },
+      { transform: `translate(${dx * 1.4}px, ${fall}px) rotate(${rot * 2}deg)`, opacity: 0 }
+    ], { duration: 1200 + Math.random() * 800, easing: 'cubic-bezier(.15,.6,.4,1)' })
+      .onfinish = () => p.remove();
+  }
+}
+
 // ---------- Spoiler-free share surfaces ----------
 function verdictOf(score) {
   return score === 0 ? 'Shut the Box' : score + ' open';
