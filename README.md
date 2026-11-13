@@ -36,6 +36,39 @@ python3 -m http.server 8090   # serve locally, then open http://localhost:8090
 
 `logic.js` is pure (no DOM/storage) and shared by the app and the tests.
 
+## Daily aggregates (Worker + D1)
+
+`worker/` holds a Cloudflare Worker with a D1 database that records one
+aggregate row per Daily Challenge day (`plays`, `score_sum`, `best`,
+`perfects`). No per-player rows; casual and friend-challenge rounds are not
+recorded (their dice are per-player, so the scores aren't field-comparable).
+The write endpoint is unauthenticated — inflated counts are accepted by
+design; revisit if abused.
+
+- `POST /api/result` — body `{ "day": "YYYY-MM-DD", "score": 0-45 }`;
+  returns fresh aggregates for the day.
+- `GET /api/stats?day=YYYY-MM-DD` — aggregates for one day.
+- `GET /api/stats` — last 30 days, newest first.
+
+The app posts a daily result after it is saved locally and renders the field
+stats ("N playing today · average X") on the result screen, in the share
+card, and in the share text. If the API is unreachable the lines stay hidden
+and the game is unaffected. `stats.html` is a standalone dashboard over the
+public GET endpoint — bookmark it for the daily numbers.
+
+First deploy of the Worker (needs a free Cloudflare account and an API token
+with D1 + Workers permissions):
+
+```bash
+cd worker
+npx wrangler d1 create shutthebox-db          # copy database_id into wrangler.toml
+npx wrangler d1 execute shutthebox-db --remote --file=schema.sql
+npx wrangler deploy
+```
+
+Then point `config.js` (`API_BASE`) at the deployed
+`https://shutthebox-api.<account>.workers.dev` origin.
+
 ## Deploy
 
 Pushes to `main` deploy via `.github/workflows/deploy.yml` (GitHub Pages,

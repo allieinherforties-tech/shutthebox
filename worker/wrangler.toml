@@ -1,0 +1,9 @@
+name = "shutthebox-api"
+main = "src/worker.js"
+compatibility_date = "2026-11-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shutthebox-db"
+# Fill after `wrangler d1 create shutthebox-db`:
+database_id = "REPLACE_AFTER_D1_CREATE"

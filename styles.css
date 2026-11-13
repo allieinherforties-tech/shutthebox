@@ -333,6 +333,10 @@ h1,h2,h3,.display{font-family:'Zilla Slab',serif;letter-spacing:.2px;margin:0;}
 .stat-line .s-val.win{color:var(--brass-dark);position:relative;}
 .stat-line .s-val.win::after{content:"●";font-size:8px;color:var(--brass);position:absolute;left:50%;transform:translateX(-50%);bottom:-8px;}
 
+/* ---------- Field stats (daily aggregates) ---------- */
+.social-line{margin-top:10px;font-size:13px;font-weight:700;color:var(--warm-gray);letter-spacing:.3px;text-align:center;}
+.st-social{margin-top:6px;font-size:11px;font-weight:800;color:var(--brass-dark);letter-spacing:.5px;text-transform:uppercase;}
+
 /* ---------- Confetti + toast ---------- */
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden;}
 .conf{position:absolute;width:9px;height:14px;border-radius:2px;}

@@ -7,6 +7,7 @@ import {
   singleDieEligible, scoreOf, decodeChallengeState,
   buildChallengeUrl, maskFromClosed, computeStreak, heatBucket, formatDateShort,
 } from './logic.js';
+import { API_BASE } from './config.js';
 
 const el = id => document.getElementById(id);
 const TOOLTIP_TEXT = 'Rolling one die guarantees a result of 1–6, instead of a two-dice roll that could total anywhere from 2–12';
@@ -375,7 +376,14 @@ async function endTurn() {
     perfect: isPerfect,
   };
 
-  if (game.mode === 'daily') saveDailyResult(game.seed, result);
+  if (game.mode === 'daily') {
+    saveDailyResult(game.seed, result);
+    lastStats = null;
+    reportDailyResult(result).then((stats) => {
+      lastStats = stats;
+      paintSocial(result);
+    });
+  }
   lastResult = result;
 
   el('controls').innerHTML = '';
@@ -442,18 +450,72 @@ function verdictOf(score) {
   return score === 0 ? 'Shut the Box' : score + ' open';
 }
 
-function shareTextFor(result) {
+function shareTextFor(result, stats) {
   const label = result.mode === 'daily' || result.day
     ? 'Shut the Box · Day ' + result.day
     : 'Shut the Box · Friendly round';
   const flame = streakLine(loadHistory(), TODAY);
-  if (result.perfect) return label + '\nShut the Box! Every tile down. Can you do the same?' + flame;
-  return label + '\n' + verdictOf(result.score) + ' — lower is better. Can you beat it?' + flame;
+  const social = socialCopy(stats, result.score);
+  const field = (result.mode === 'daily' && social && social.avg !== null)
+    ? '\nToday: ' + stats.plays + ' players · average ' + stats.avg
+      + (result.score < stats.avg ? ' — you beat it' : '')
+    : '';
+  if (result.perfect) return label + '\nShut the Box! Every tile down. Can you do the same?' + field + flame;
+  return label + '\n' + verdictOf(result.score) + ' — lower is better. Can you beat it?' + field + flame;
 }
 
 function streakLine(history, today) {
   const s = computeStreak(history, today);
   return s >= 2 ? '\n🔥 ' + s + '-day streak' : '';
+}
+
+// ---------- Daily aggregates (Cloudflare Worker + D1) ----------
+// Records the day's Daily Challenge result and returns fresh aggregates for
+// the result screen and share card. Daily plays only — casual and friend
+// challenges use per-player dice, so their scores aren't field-comparable.
+// Fire-and-forget: a slow or missing API never blocks the result screen.
+let lastStats = null;
+
+async function reportDailyResult(result) {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch(API_BASE + '/api/result', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ day: utcDateStr(), score: result.score }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error('stats API ' + res.status);
+    return await res.json();
+  } catch (err) {
+    console.warn('Daily stats unavailable — continuing without field stats:', err);
+    return null;
+  }
+}
+
+// Pure copy formatting — no DOM. Returns null when there is nothing to show.
+function socialCopy(stats, myScore) {
+  if (!stats || !stats.plays) return null;
+  if (stats.plays < 2) return { line: 'You’re the first to play today', tile: 'First in today', avg: null };
+  return {
+    line: stats.plays + ' playing today · average ' + stats.avg + (myScore < stats.avg ? ' — you’re ahead' : ''),
+    tile: 'Avg today ' + stats.avg + ' · ' + stats.plays + ' players',
+    avg: stats.avg,
+  };
+}
+
+function paintSocial(result) {
+  const social = socialCopy(lastStats, result && result.score);
+  const line = el('social-line');
+  const tile = el('st-social');
+  line.hidden = !social;
+  tile.hidden = !social;
+  if (social) {
+    line.textContent = social.line;
+    tile.textContent = social.tile;
+  }
 }
 
 function renderScoreTile(eyebrowId, scoreId, verdictId, streakId, result, history) {
@@ -484,6 +546,7 @@ function showResult(r) {
     el('result-sub').innerHTML = '<b>' + r.score + '</b> still open. Lower is better' + (r.mode === 'daily' ? ' — come back tomorrow.' : '. Keep rolling.');
   }
   renderScoreTile('st-eyebrow', 'st-score', 'st-verdict', 'st-streak', r, loadHistory());
+  paintSocial(r);
 
   // Action set depends on mode; every result carries the friend-challenge CTA.
   const again = el('btn-again');
@@ -537,7 +600,7 @@ async function shareOrCopy(title, text, url) {
 
 el('btn-share').addEventListener('click', () => {
   if (!lastResult) return;
-  shareOrCopy('Shut the Box', shareTextFor(lastResult), siteUrl());
+  shareOrCopy('Shut the Box', shareTextFor(lastResult, lastStats), siteUrl());
 });
 
 function siteUrl() {
