@@ -32,7 +32,7 @@ jobs:
       - name: Stage site files only
         run: |
           mkdir -p _site
-          cp index.html styles.css app.js logic.js CNAME _site/
+          cp *.html *.js *.css CNAME _site/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
