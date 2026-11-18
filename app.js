@@ -4,13 +4,12 @@
 // ============================================================
 import {
   utcDateStr, dayNumber, buildDiceStream, hasCombo,
-  singleDieEligible, scoreOf, decodeChallengeState,
+  scoreOf, decodeChallengeState,
   buildChallengeUrl, maskFromClosed, computeStreak, heatBucket, formatDateShort,
 } from './logic.js';
 import { API_BASE } from './config.js';
 
 const el = id => document.getElementById(id);
-const TOOLTIP_TEXT = 'Rolling one die guarantees a result of 1–6, instead of a two-dice roll that could total anywhere from 2–12';
 
 // ---------- Storage (dailies only; casual/challenge rounds are never persisted) ----------
 const STORE_KEY = 'stb_v1_history';
@@ -55,7 +54,6 @@ let challengeIncoming = null; // decoded challenge link, while active
 const SCREENS = ['home', 'how', 'game', 'result', 'challenge', 'invite', 'compare', 'history'];
 function showScreen(name) {
   SCREENS.forEach(s => el('screen-' + s).classList.toggle('active', s === name));
-  hideTooltip();
   window.scrollTo(0, 0);
 }
 
@@ -181,60 +179,18 @@ function setStatus(html, mode) {
   s.innerHTML = html;
 }
 
-// ---------- Controls + single-die tooltip ----------
-function hideTooltip() {
-  const tip = document.getElementById('tooltip');
-  if (tip) tip.classList.add('hidden');
-}
-
-function renderTooltip() {
-  const tip = document.createElement('div');
-  tip.className = 'tooltip hidden';
-  tip.id = 'tooltip';
-  tip.setAttribute('role', 'tooltip');
-  tip.textContent = TOOLTIP_TEXT;
-  return tip;
-}
-
+// ---------- Controls ----------
 function renderControls() {
   const c = el('controls');
   c.innerHTML = '';
   if (game.phase === 'idle') {
-    const group = document.createElement('div');
-    group.className = 'roll-group';
-    const row = document.createElement('div');
-    row.className = 'roll-row';
-    const eligible = singleDieEligible(openValues());
     const rollBtn = document.createElement('button');
     rollBtn.className = 'btn btn-primary';
     rollBtn.type = 'button';
     rollBtn.textContent = 'Roll';
-    rollBtn.addEventListener('click', () => { hideTooltip(); doRoll(false); });
-    row.appendChild(rollBtn);
-    if (eligible) {
-      const one = document.createElement('button');
-      one.className = 'btn btn-ghost';
-      one.type = 'button';
-      one.textContent = 'Roll one die';
-      one.addEventListener('click', () => { hideTooltip(); doRoll(true); });
-      const info = document.createElement('button');
-      info.className = 'info-btn';
-      info.type = 'button';
-      info.id = 'btn-die-info';
-      info.setAttribute('aria-label', 'Why roll one die?');
-      info.setAttribute('aria-expanded', 'false');
-      info.textContent = 'i';
-      info.addEventListener('click', toggleTooltip);
-      row.appendChild(one);
-      row.appendChild(info);
-      el('hint').textContent = 'Tiles 7–9 are down — you may roll a single die.';
-      showTooltipOnce();
-    } else {
-      el('hint').textContent = '';
-    }
-    group.appendChild(row);
-    group.appendChild(renderTooltip());
-    c.appendChild(group);
+    rollBtn.addEventListener('click', () => doRoll());
+    el('hint').textContent = '';
+    c.appendChild(rollBtn);
   } else if (game.phase === 'selecting') {
     const matched = sumSelected() === game.rollTotal && game.selected.size > 0;
     const close = document.createElement('button');
@@ -248,31 +204,10 @@ function renderControls() {
   }
 }
 
-let tooltipShownOnce = false;
-function showTooltipOnce() {
-  if (tooltipShownOnce) return;
-  tooltipShownOnce = true;
-  const tip = document.getElementById('tooltip');
-  if (!tip) return;
-  tip.classList.remove('hidden');
-  document.getElementById('btn-die-info')?.setAttribute('aria-expanded', 'true');
-  setTimeout(() => {
-    tip.classList.add('hidden');
-    document.getElementById('btn-die-info')?.setAttribute('aria-expanded', 'false');
-  }, 5200);
-}
-
-function toggleTooltip() {
-  const tip = document.getElementById('tooltip');
-  if (!tip) return;
-  const showing = !tip.classList.contains('hidden');
-  tip.classList.toggle('hidden', showing);
-  document.getElementById('btn-die-info')?.setAttribute('aria-expanded', String(!showing));
-}
 
 // ---------- Turn flow ----------
 let rolling = false;
-function doRoll(single) {
+function doRoll() {
   if (rolling || game.phase !== 'idle') return;
   rolling = true;
   el('controls').innerHTML = '';
@@ -282,15 +217,13 @@ function doRoll(single) {
   game.rolls++;
   let ticks = 0;
   const anim = setInterval(() => {
-    game.dice = single
-      ? [1 + Math.floor(Math.random() * 6)]
-      : [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
+    game.dice = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)];
     renderDice(true);
     if (++ticks > 40) clearInterval(anim);
   }, 70);
   setTimeout(() => {
     clearInterval(anim);
-    game.dice = single ? [pair[0]] : [pair[0], pair[1]];
+    game.dice = [pair[0], pair[1]];
     game.rollTotal = game.dice.reduce((a, b) => a + b, 0);
     renderDice(false);
     rolling = false;

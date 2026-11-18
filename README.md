@@ -15,8 +15,6 @@ no build step — plain HTML/CSS/JS modules served by GitHub Pages at
   board) is URL-encoded into a `?c=` link. The recipient plays the identical
   dice sequence, then a head-to-head comparison shows both boards and score,
   fewest rolls, and most rolls without a miss.
-- **Single-die rule** — once tiles 7–9 are closed you may roll one die instead
-  of two.
 - **History** — day streak, best score, Shut-the-Box count, a 12-week heatmap
   with a legend, and recent dailies.
 

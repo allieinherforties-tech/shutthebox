@@ -39,7 +39,7 @@ export function dayNumber(dateStr, epoch = LAUNCH_EPOCH) {
 
 // ---------- Dice stream ----------
 // Pre-generate a deterministic stream of dice pairs. Every player at roll #k
-// sees the same pair; a single-die roll consumes the same slot's first die.
+// sees the same pair.
 export function buildDiceStream(seedStr, length = 400) {
   const rng = mulberry32(hashString(seedStr));
   return Array.from({ length }, () => [
@@ -59,11 +59,6 @@ export function hasCombo(values, target) {
     return rec(i + 1, remaining - avail[i]) || rec(i + 1, remaining);
   }
   return rec(0, target);
-}
-
-// The single-die option opens once tiles 7, 8 and 9 are all closed (GDD §2).
-export function singleDieEligible(openValues) {
-  return ![7, 8, 9].some(v => openValues.includes(v));
 }
 
 // Sum-based scoring: the score is the sum of the open tile values (lower is better).

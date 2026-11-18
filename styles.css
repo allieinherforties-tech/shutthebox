@@ -202,28 +202,6 @@ h1,h2,h3,.display{font-family:'Zilla Slab',serif;letter-spacing:.2px;margin:0;}
 .controls .btn-row{gap:10px;}
 .hint{text-align:center;color:var(--warm-gray);font-size:13px;font-weight:700;min-height:18px;}
 
-/* ---------- Single-die tooltip ---------- */
-.roll-group{position:relative;width:100%;}
-.roll-row{display:flex;gap:10px;align-items:stretch;}
-.roll-row .btn{flex:1;min-width:0;}
-.info-btn{
-  flex:0 0 52px;min-width:52px;min-height:52px;border-radius:14px;border:2px solid var(--brass);
-  background:#fff;color:var(--brass-dark);font-family:'Zilla Slab',serif;font-weight:700;
-  font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-}
-.info-btn:active{background:#F7EFDB;}
-.tooltip{
-  position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);
-  width:min(320px,86vw);background:var(--navy);color:#F4EFE3;
-  font-size:13.5px;font-weight:600;line-height:1.5;padding:12px 14px;border-radius:12px;
-  box-shadow:0 10px 24px rgba(0,0,0,.35);z-index:30;
-}
-.tooltip::after{
-  content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
-  border:8px solid transparent;border-top-color:var(--navy);
-}
-.tooltip.hidden{display:none;}
-
 /* ---------- Result ---------- */
 .result{padding:20px 22px 22px;flex:1;display:flex;flex-direction:column;text-align:center;}
 .result-eyebrow{color:var(--warm-gray);font-weight:800;font-size:13px;letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px;}

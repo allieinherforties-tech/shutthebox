@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   mulberry32, hashString, utcDateStr, dayNumber, buildDiceStream,
-  hasCombo, singleDieEligible, scoreOf,
+  hasCombo, scoreOf,
   encodeChallengeState, decodeChallengeState, buildChallengeUrl,
   maskFromClosed, computeStreak, heatBucket,
 } from '../logic.js';
@@ -50,15 +50,6 @@ test('hasCombo finds subset sums', () => {
   assert.equal(hasCombo([5], 5), true);
   assert.equal(hasCombo([1, 3, 5, 7], 9), true);  // 1+3+5
   assert.equal(hasCombo([2, 6], 45), false);
-});
-
-test('singleDieEligible requires 7, 8 and 9 all closed (argument = open values)', () => {
-  assert.equal(singleDieEligible([1, 2, 3, 4, 5, 6]), true);
-  assert.equal(singleDieEligible([1, 2, 3, 4, 5, 6, 7]), false);
-  assert.equal(singleDieEligible([8]), false);
-  assert.equal(singleDieEligible([9]), false);
-  assert.equal(singleDieEligible([1, 9, 8]), false);
-  assert.equal(singleDieEligible([7, 8, 9]), false); // 7–9 still open → two dice only
 });
 
 test('scoreOf sums open tiles', () => {
