@@ -3,7 +3,7 @@
 // Pure rules live in logic.js.
 // ============================================================
 import {
-  utcDateStr, dayNumber, buildDiceStream, hasCombo,
+  utcDateStr, dayNumber, buildDiceStream, hasCombo, isReplayableDay,
   scoreOf, decodeChallengeState,
   buildChallengeUrl, maskFromClosed, computeStreak, heatBucket, formatDateShort,
 } from './logic.js';
@@ -83,11 +83,13 @@ function resetGame(mode, seed, day) {
     rollIndex: 0, dice: [], rollTotal: 0, phase: 'idle',
     selected: new Set(), rolls: 0, cleanCur: 0, cleanBest: 0,
   });
+  // A daily round seeded with a past date is an archive replay.
+  game.archive = mode === 'daily' && seed !== TODAY;
 }
 
 function startGame(mode, seed, day) {
   resetGame(mode, seed, day);
-  el('game-title').textContent = mode === 'daily' ? 'Daily Challenge' : mode === 'challenge' ? 'Friend Challenge' : 'Casual Round';
+  el('game-title').textContent = mode === 'daily' ? (game.archive ? 'Archive Challenge' : 'Daily Challenge') : mode === 'challenge' ? 'Friend Challenge' : 'Casual Round';
   el('game-day').textContent = mode === 'daily' ? 'Day ' + game.day : mode === 'challenge' ? (game.day ? 'Day ' + game.day : 'Friendly') : 'Casual';
   renderTiles();
   renderDice(false);
@@ -302,8 +304,12 @@ async function endTurn() {
     saveDailyResult(game.seed, result);
     lastStats = null;
     reportDailyResult(result).then((stats) => {
-      lastStats = stats;
-      paintSocial(result);
+      // The "playing today" field line is only honest for the live day;
+      // archive rounds report under their own date and skip it.
+      if (game.seed === TODAY) {
+        lastStats = stats;
+        paintSocial(result);
+      }
     });
   }
   lastResult = result;
@@ -405,7 +411,7 @@ async function reportDailyResult(result) {
     const res = await fetch(API_BASE + '/api/result', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ day: utcDateStr(), score: result.score }),
+      body: JSON.stringify({ day: result.seed, score: result.score }),
       signal: ctrl.signal,
     });
     clearTimeout(timer);
@@ -451,7 +457,8 @@ function renderScoreTile(eyebrowId, scoreId, verdictId, streakId, result, histor
 }
 
 function showResult(r) {
-  el('result-day').textContent = r.mode === 'daily' ? 'Daily Challenge · Day ' + r.day
+  el('result-day').textContent = r.mode === 'daily'
+    ? (r.seed !== TODAY ? 'Archive · Day ' + r.day : 'Daily Challenge · Day ' + r.day)
     : r.mode === 'challenge' ? 'Challenge Round' : 'Casual Round';
   const hl = el('result-headline');
   if (r.perfect) {
@@ -679,10 +686,20 @@ function renderHistory() {
     for (let d = 0; d < 7; d++) {
       const dt = new Date(start.getTime() + (w * 7 + d) * 86400000);
       const ds = utcDateStr(dt);
-      const cell = document.createElement('div');
       const r = history[ds];
-      cell.className = 'heat-cell ' + (r ? heatBucket(r) : '');
-      cell.title = ds + (r ? ' — ' + (r.score === 0 ? 'Shut the Box!' : r.score + ' open') : '');
+      // Unplayed past days are replayable: a real button so it is keyboard
+      // reachable. Today plays from Home; pre-launch and future dates never
+      // had a daily challenge, so they cannot be played.
+      const playable = !r && isReplayableDay(ds, TODAY);
+      const cell = document.createElement(playable ? 'button' : 'div');
+      if (playable) {
+        cell.type = 'button';
+        cell.setAttribute('aria-label', 'Replay the daily challenge from ' + ds + ' · Day ' + dayNumber(ds));
+        cell.addEventListener('click', () => startGame('daily', ds, dayNumber(ds)));
+      }
+      cell.className = 'heat-cell ' + (r ? heatBucket(r) : (playable ? 'playable' : ''));
+      cell.title = ds + (r ? ' — ' + (r.score === 0 ? 'Shut the Box!' : r.score + ' open')
+        : playable ? ' — tap to replay this day' : '');
       if (ds === TODAY) cell.style.outline = '2px solid rgba(31,77,61,.5)';
       col.appendChild(cell);
     }
@@ -700,7 +717,7 @@ function renderHistory() {
       item.className = 'day-item';
       const dn = dayNumber(ds);
       item.innerHTML =
-        '<div class="d-num">Day ' + dn + '</div>' +
+        '<div class="d-num">Day ' + dn + (ds !== TODAY ? ' <span class="archive-tag">Archive</span>' : '') + '</div>' +
         '<div class="d-date">' + formatDateShort(ds) + (r.rolls ? ' · ' + r.rolls + ' rolls' : '') + '</div>' +
         '<div class="d-score' + (r.score === 0 ? ' perfect' : '') + '">' + (r.score === 0 ? 'SHUT' : r.score) + '</div>';
       list.appendChild(item);
