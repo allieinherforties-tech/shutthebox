@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  utcDateStr, dayNumber, buildDiceStream, isPastDay, computeStreak,
+  utcDateStr, dayNumber, buildDiceStream, isPastDay, isReplayableDay, computeStreak,
 } from '../logic.js';
 import { createHistoryStore } from '../storage.js';
 
@@ -23,6 +23,16 @@ test('isPastDay: strictly-before today is playable, today and future are not', (
   assert.equal(isPastDay(TODAY, TODAY), false);          // today plays from Home
   assert.equal(isPastDay('2026-11-25', TODAY), false);   // future
   assert.equal(isPastDay('2027-01-01', TODAY), false);   // far future
+});
+
+// ---------- isReplayableDay: the launch-day floor on archive play ----------
+
+test('isReplayableDay: pre-launch dates are not replayable — no daily challenge existed', () => {
+  assert.equal(isReplayableDay('2026-11-08', TODAY), false); // day before launch
+  assert.equal(isReplayableDay('2026-11-09', TODAY), true);  // launch day
+  assert.equal(isReplayableDay(PAST, TODAY), true);
+  assert.equal(isReplayableDay(TODAY, TODAY), false);        // today plays from Home
+  assert.equal(isReplayableDay('2026-11-25', TODAY), false); // future
 });
 
 // ---------- dayNumber / seed correctness for past dates ----------

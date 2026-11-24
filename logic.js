@@ -153,6 +153,12 @@ export function isPastDay(dateStr, todayStr) {
   return dateStr < todayStr;
 }
 
+// A past day is replayable only from launch onward — earlier dates never had
+// a daily challenge (dayNumber goes negative before LAUNCH_EPOCH).
+export function isReplayableDay(dateStr, todayStr, epoch = LAUNCH_EPOCH) {
+  return isPastDay(dateStr, todayStr) && dateStr >= epoch;
+}
+
 export function formatDateShort(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));

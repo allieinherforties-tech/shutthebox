@@ -3,7 +3,7 @@
 // Pure rules live in logic.js.
 // ============================================================
 import {
-  utcDateStr, dayNumber, buildDiceStream, hasCombo, isPastDay,
+  utcDateStr, dayNumber, buildDiceStream, hasCombo, isReplayableDay,
   scoreOf, decodeChallengeState,
   buildChallengeUrl, maskFromClosed, computeStreak, heatBucket, formatDateShort,
 } from './logic.js';
@@ -688,8 +688,9 @@ function renderHistory() {
       const ds = utcDateStr(dt);
       const r = history[ds];
       // Unplayed past days are replayable: a real button so it is keyboard
-      // reachable. Today plays from Home; future days cannot be played.
-      const playable = !r && isPastDay(ds, TODAY);
+      // reachable. Today plays from Home; pre-launch and future dates never
+      // had a daily challenge, so they cannot be played.
+      const playable = !r && isReplayableDay(ds, TODAY);
       const cell = document.createElement(playable ? 'button' : 'div');
       if (playable) {
         cell.type = 'button';
