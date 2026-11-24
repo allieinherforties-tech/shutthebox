@@ -8,33 +8,22 @@ import {
   buildChallengeUrl, maskFromClosed, computeStreak, heatBucket, formatDateShort,
 } from './logic.js';
 import { API_BASE } from './config.js';
+import { createHistoryStore } from './storage.js';
 
 const el = id => document.getElementById(id);
 
 // ---------- Storage (dailies only; casual/challenge rounds are never persisted) ----------
 const STORE_KEY = 'stb_v1_history';
 const NAME_KEY = 'stb_v1_name';
-let memoryHistory = null; // fallback when localStorage is unavailable
+// Storage is reached lazily so nothing touches localStorage at module load.
+const historyStore = createHistoryStore(() => localStorage, STORE_KEY);
 
 function loadHistory() {
-  if (memoryHistory) return memoryHistory;
-  try {
-    memoryHistory = JSON.parse(localStorage.getItem(STORE_KEY) || '{}') || {};
-  } catch (err) {
-    console.warn('History unreadable, starting fresh:', err);
-    memoryHistory = {};
-  }
-  return memoryHistory;
+  return historyStore.load();
 }
 
 function saveDailyResult(dateStr, result) {
-  const history = loadHistory();
-  history[dateStr] = result;
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify(history));
-  } catch (err) {
-    console.warn('Could not persist history:', err);
-  }
+  historyStore.save(dateStr, result);
 }
 
 function loadName() {
@@ -667,6 +656,9 @@ el('btn-cmp-done').addEventListener('click', () => { challengeIncoming = null; r
 // ---------- History screen ----------
 function renderHistory() {
   const history = loadHistory();
+  // Explain an empty state when storage is unavailable or dropped the data
+  // (Safari private tabs, Block All Cookies, ITP 7-day purge).
+  el('storage-note').hidden = !historyStore.isBroken();
   const streak = computeStreak(history, TODAY);
   const scores = Object.values(history);
   const best = scores.length ? Math.min(...scores.map(r => r.score)) : null;
