@@ -194,6 +194,70 @@
         <div class="archive-note">Tap a dashed cell to replay a missed day — it counts toward your history and streak.</div>
       </div>
       <div class="day-list" id="day-list"></div>
+      <div class="transfer-entry"><button class="btn-text" id="btn-transfer">Transfer history</button></div>
+    </div>
+  </section>
+
+  <!-- ============ TRANSFER HUB ============ -->
+  <section id="screen-transfer" class="screen">
+    <div class="chrome-header">
+      <button class="back" data-nav="home" aria-label="Back">←</button>
+      <div class="chrome-title">Transfer History</div>
+    </div>
+    <div class="intro" style="padding-top:8px;">
+      <div class="challenge-panel">
+        <p>Move your daily history to another device with a code. Nothing is sent anywhere — <b>the code itself carries your history.</b></p>
+      </div>
+      <div class="btn-stack">
+        <button class="btn btn-primary" id="btn-transfer-export">Send history to another device</button>
+        <button class="btn btn-ghost" id="btn-transfer-import">Bring history to this device</button>
+        <button class="btn-text" data-nav="home">Back to home</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TRANSFER EXPORT ============ -->
+  <section id="screen-transfer-export" class="screen">
+    <div class="chrome-header">
+      <button class="back" id="btn-transfer-export-back" aria-label="Back">←</button>
+      <div class="chrome-title">Transfer History</div>
+    </div>
+    <div class="intro" style="padding-top:8px;">
+      <div class="challenge-panel">
+        <p id="transfer-export-summary"></p>
+        <textarea class="transfer-code" id="transfer-code-out" readonly spellcheck="false" aria-label="Your history transfer code"></textarea>
+        <div class="share-note">Your history is packed into this code. Paste it on your other device.</div>
+      </div>
+      <div class="btn-stack">
+        <button class="btn btn-primary" id="btn-transfer-copy">Copy Code</button>
+        <button class="btn btn-ghost" id="btn-transfer-share">Share Code</button>
+        <button class="btn-text" id="btn-transfer-export-back-text">Back</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TRANSFER IMPORT ============ -->
+  <section id="screen-transfer-import" class="screen">
+    <div class="chrome-header">
+      <button class="back" id="btn-transfer-import-back" aria-label="Back">←</button>
+      <div class="chrome-title">Transfer History</div>
+    </div>
+    <div class="intro" style="padding-top:8px;">
+      <div class="challenge-panel">
+        <label class="field-lbl" for="transfer-code-in">Paste the transfer code</label>
+        <textarea class="transfer-code" id="transfer-code-in" spellcheck="false" placeholder="Paste the code from your other device" aria-describedby="transfer-error"></textarea>
+        <div class="empty-note" id="transfer-error" hidden>That code doesn’t look right — copy it again from the other device.</div>
+        <div class="btn-stack">
+          <button class="btn btn-primary" id="btn-transfer-preview">Preview Merge</button>
+        </div>
+        <div id="transfer-confirm" hidden>
+          <p id="transfer-preview-summary"></p>
+          <div class="btn-stack">
+            <button class="btn btn-primary" id="btn-transfer-apply">Merge History</button>
+            <button class="btn btn-ghost" id="btn-transfer-cancel">Cancel</button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 

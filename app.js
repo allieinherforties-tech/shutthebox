@@ -6,6 +6,7 @@ import {
   utcDateStr, dayNumber, buildDiceStream, hasCombo, isReplayableDay,
   scoreOf, decodeChallengeState,
   buildChallengeUrl, maskFromClosed, computeStreak, heatBucket, formatDateShort,
+  encodeHistoryCode, decodeHistoryCode, mergeHistory,
 } from './logic.js';
 import { API_BASE } from './config.js';
 import { createHistoryStore } from './storage.js';
@@ -40,7 +41,7 @@ let lastResult = null;   // most recent completed round (daily, casual, or chall
 let challengeIncoming = null; // decoded challenge link, while active
 
 // ---------- Screens ----------
-const SCREENS = ['home', 'how', 'game', 'result', 'challenge', 'invite', 'compare', 'history'];
+const SCREENS = ['home', 'how', 'game', 'result', 'challenge', 'invite', 'compare', 'history', 'transfer', 'transfer-export', 'transfer-import'];
 function showScreen(name) {
   SCREENS.forEach(s => el('screen-' + s).classList.toggle('active', s === name));
   window.scrollTo(0, 0);
@@ -724,6 +725,93 @@ function renderHistory() {
     }
   }
 }
+
+// ---------- History transfer (stateless codes; the payload rides in the code) ----------
+let incomingTransfer = null; // decoded history, shown in the merge preview until confirmed or cleared
+
+function previewCounts(local, incoming) {
+  let added = 0, bettered = 0, unchanged = 0;
+  for (const [dateStr, rec] of Object.entries(incoming)) {
+    const cur = local[dateStr];
+    if (!cur) added++;
+    else if (rec.score < cur.score) bettered++;
+    else unchanged++;
+  }
+  return { added, bettered, unchanged };
+}
+
+function openTransferExport() {
+  const history = loadHistory();
+  const count = Object.keys(history).length;
+  el('transfer-export-summary').innerHTML = count
+    ? 'All <b>' + count + '</b> day' + (count === 1 ? '' : 's') + ' of your history fit in this code.'
+    : 'No history yet — play a daily challenge first.';
+  el('transfer-code-out').value = encodeHistoryCode(history);
+  showScreen('transfer-export');
+}
+
+function openTransferImport() {
+  el('transfer-code-in').value = '';
+  el('transfer-error').hidden = true;
+  el('transfer-confirm').hidden = true;
+  incomingTransfer = null;
+  showScreen('transfer-import');
+}
+
+function previewTransferMerge() {
+  const incoming = decodeHistoryCode(el('transfer-code-in').value);
+  el('transfer-error').hidden = !!incoming;
+  el('transfer-confirm').hidden = true;
+  incomingTransfer = null;
+  if (!incoming) return; // existing history stays untouched
+  incomingTransfer = incoming;
+  const { added, bettered, unchanged } = previewCounts(loadHistory(), incoming);
+  el('transfer-preview-summary').innerHTML = (!added && !bettered)
+    ? 'Nothing to merge — this code adds no new or better days.'
+    : '<b>' + added + '</b> new day' + (added === 1 ? '' : 's') +
+      ' and <b>' + bettered + '</b> better score' + (bettered === 1 ? '' : 's') +
+      ' will be added. Your best score for each day always wins.' +
+      (unchanged ? ' ' + unchanged + ' day' + (unchanged === 1 ? ' is' : 's are') + ' already as good or better.' : '');
+  el('transfer-confirm').hidden = false;
+}
+
+function applyTransferMerge() {
+  if (!incomingTransfer) return;
+  const local = loadHistory();
+  const merged = mergeHistory(local, incomingTransfer);
+  let changed = 0;
+  for (const [dateStr, rec] of Object.entries(merged)) {
+    if (local[dateStr] !== rec) {
+      saveDailyResult(dateStr, rec);
+      changed++;
+    }
+  }
+  incomingTransfer = null;
+  toast(changed ? 'History merged' : 'Nothing to merge');
+  renderHistory();
+  showScreen('history');
+}
+
+el('btn-transfer').addEventListener('click', () => showScreen('transfer'));
+el('btn-transfer-export').addEventListener('click', openTransferExport);
+el('btn-transfer-import').addEventListener('click', openTransferImport);
+el('btn-transfer-export-back').addEventListener('click', () => showScreen('transfer'));
+el('btn-transfer-export-back-text').addEventListener('click', () => showScreen('transfer'));
+el('btn-transfer-import-back').addEventListener('click', () => showScreen('transfer'));
+el('btn-transfer-copy').addEventListener('click', async () => {
+  const ok = await copyText(el('transfer-code-out').value);
+  toast(ok ? 'Code copied' : 'Copy failed — long-press to copy');
+});
+el('btn-transfer-share').addEventListener('click', () => {
+  shareOrCopy('Shut the Box — History Transfer',
+    'Here is my Shut the Box history code. Paste it on your device to bring my history over:\n\n' + el('transfer-code-out').value);
+});
+el('btn-transfer-preview').addEventListener('click', previewTransferMerge);
+el('btn-transfer-apply').addEventListener('click', applyTransferMerge);
+el('btn-transfer-cancel').addEventListener('click', () => {
+  incomingTransfer = null;
+  el('transfer-confirm').hidden = true;
+});
 
 // ---------- Home ----------
 function renderHome() {

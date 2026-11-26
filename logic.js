@@ -69,6 +69,21 @@ export function scoreOf(openValues) {
 // ---------- Challenge links (URL-encoded state, no backend) ----------
 // Payload: v (format), seed (dice seed), day (0 for non-daily), sc (score),
 // r (rolls), k (best clean streak), m (closed-mask bitstring, 1 = closed), n (name).
+// Base64url of UTF-8 bytes, URL-safe and unpadded — shared by challenge and
+// transfer codes.
+function encodeBase64Url(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  bytes.forEach(b => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function decodeBase64Url(str) {
+  const b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
+  return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+}
+
 export function encodeChallengeState(ch) {
   const compact = {
     v: 1,
@@ -80,19 +95,12 @@ export function encodeChallengeState(ch) {
     m: ch.mask,
     n: (ch.name || '').slice(0, 24),
   };
-  const json = JSON.stringify(compact);
-  const bytes = new TextEncoder().encode(json);
-  let bin = '';
-  bytes.forEach(b => { bin += String.fromCharCode(b); });
-  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return encodeBase64Url(JSON.stringify(compact));
 }
 
 export function decodeChallengeState(str) {
   try {
-    const b64 = str.replace(/-/g, '+').replace(/_/g, '/');
-    const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
-    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
-    const o = JSON.parse(new TextDecoder().decode(bytes));
+    const o = JSON.parse(decodeBase64Url(str));
     if (!o || o.v !== 1 || typeof o.s !== 'string' || !/^[01]{9}$/.test(o.m || '')) return null;
     return {
       seed: o.s,
@@ -107,6 +115,104 @@ export function decodeChallengeState(str) {
     console.warn('Could not read challenge link:', err);
     return null;
   }
+}
+
+// ---------- History transfer codes (stateless; the payload rides in the code) ----------
+// Same scheme as challenge links: versioned JSON → base64url. Dates collapse to
+// integer day numbers and closed-mask bitstrings pack into one integer, so a
+// year of daily entries stays a pasteable string (still far beyond QR capacity).
+const TRANSFER_VERSION = 1;
+// Decode bounds: score is a sum of open tiles (max 1+2+…+9 = 45); the rest are
+// generous sanity caps so a truncated or garbled code fails loudly, never softly.
+const TRANSFER_LIMITS = { score: 45, rolls: 10000, streak: 99, mask: 511 };
+
+const isInt = n => Number.isInteger(n);
+
+function dateFromDayNumber(day, epoch = LAUNCH_EPOCH) {
+  const [ey, em, ed] = epoch.split('-').map(Number);
+  return utcDateStr(new Date(Date.UTC(ey, em - 1, ed) + (day - 1) * 86400000));
+}
+
+// History shape: { [dateStr]: { mode, seed, day, score, rolls, streak, mask, perfect } }.
+// Only dailies are persisted, so mode/seed/day are derivable from the date key
+// and never travel in the payload. Entries without a numeric score are skipped.
+export function historyToPayload(history) {
+  const h = Object.keys(history)
+    .filter(dateStr => {
+      const r = history[dateStr];
+      return r && typeof r.score === 'number';
+    })
+    .sort()
+    .map(dateStr => {
+      const r = history[dateStr];
+      return [
+        dayNumber(dateStr),
+        Math.max(0, Math.round(r.score)),
+        Math.max(0, Math.round(r.rolls) || 0),
+        Math.max(0, Math.round(r.streak) || 0),
+        parseInt(r.mask, 2) || 0,
+      ];
+    });
+  return { v: TRANSFER_VERSION, h };
+}
+
+// Strict inverse of historyToPayload. Returns null on any schema violation —
+// a bad code must fail loudly, never reconstruct corrupt history.
+export function payloadToHistory(payload) {
+  try {
+    if (!payload || payload.v !== TRANSFER_VERSION || !Array.isArray(payload.h)) return null;
+    const history = {};
+    for (const entry of payload.h) {
+      if (!Array.isArray(entry) || entry.length !== 5) return null;
+      const [day, score, rolls, streak, mask] = entry;
+      if (![day, score, rolls, streak, mask].every(isInt)) return null;
+      if (score < 0 || score > TRANSFER_LIMITS.score) return null;
+      if (rolls < 0 || rolls > TRANSFER_LIMITS.rolls) return null;
+      if (streak < 0 || streak > TRANSFER_LIMITS.streak) return null;
+      if (mask < 0 || mask > TRANSFER_LIMITS.mask) return null;
+      const dateStr = dateFromDayNumber(day);
+      history[dateStr] = {
+        mode: 'daily',
+        seed: dateStr,
+        day: dayNumber(dateStr),
+        score,
+        rolls,
+        streak,
+        mask: mask.toString(2).padStart(9, '0'),
+        perfect: score === 0,
+      };
+    }
+    return history;
+  } catch (err) {
+    console.warn('Could not read transfer payload:', err);
+    return null;
+  }
+}
+
+export function encodeHistoryCode(history) {
+  return encodeBase64Url(JSON.stringify(historyToPayload(history)));
+}
+
+// Tolerates whitespace and line wraps from pasted text; null on any failure.
+export function decodeHistoryCode(str) {
+  try {
+    return payloadToHistory(JSON.parse(decodeBase64Url(String(str).replace(/\s+/g, ''))));
+  } catch (err) {
+    console.warn('Could not read transfer code:', err);
+    return null;
+  }
+}
+
+// Union of dates; per date the LOWEST score wins, and an equal score keeps
+// the record already on the device. Pure: neither argument is mutated, so the
+// result can be previewed before anything is stored.
+export function mergeHistory(local, incoming) {
+  const merged = { ...local };
+  for (const [dateStr, rec] of Object.entries(incoming)) {
+    const cur = merged[dateStr];
+    if (!cur || rec.score < cur.score) merged[dateStr] = rec;
+  }
+  return merged;
 }
 
 export function buildChallengeUrl(base, ch) {
