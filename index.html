@@ -41,13 +41,13 @@
     </div>
     <div class="intro" style="padding-top:8px;">
       <div class="rules-card">
-        <div class="rule"><div class="num">1</div><p><b>Roll and add.</b> Roll two dice on every turn. Their total is your target.</p></div>
-        <div class="rule"><div class="num">2</div><p>Tap <b>any tiles that sum to the roll</b>, then close them.</p></div>
+        <div class="rule"><div class="num">1</div><p><b>Roll and add.</b> Two dice each turn. Their total is your target.</p></div>
+        <div class="rule"><div class="num">2</div><p>Tap <b>tiles that add up to your roll</b>, then close them.</p></div>
         <div class="rule"><div class="num">3</div><p>Keep rolling. Your turn ends when <b>no tiles can make your roll.</b></p></div>
-        <div class="rule"><div class="num">4</div><p>Score is the <b>tiles left over</b> — lower is better. Close them all to <b>Shut the Box.</b></p></div>
+        <div class="rule"><div class="num">4</div><p>Score is the <b>tiles left over</b>. Lower is better. Close them all to <b>Shut the Box.</b></p></div>
       </div>
       <div class="spacer"></div>
-      <button class="btn btn-primary" id="btn-how-play">Got it — let’s play</button>
+      <button class="btn btn-primary" id="btn-how-play">Got it, let’s play</button>
       <button class="btn-text" data-nav="home">Back to home</button>
     </div>
   </section>
@@ -88,7 +88,7 @@
         <div class="st-streak" id="st-streak"></div>
         <div class="st-social" id="st-social" hidden></div>
       </div>
-      <div class="share-note" id="share-note">Spoiler-free — your board stays private until they play.</div>
+      <div class="share-note" id="share-note">Spoiler-free: your board stays private until they play.</div>
       <div class="result-actions">
         <button class="btn btn-primary" id="btn-share">Share Result</button>
         <button class="btn btn-brass" id="btn-challenge">Challenge a Friend</button>
@@ -114,7 +114,7 @@
       <div class="spacer"></div>
       <div class="btn-stack">
         <button class="btn btn-brass" id="btn-send-challenge">Create Challenge Link</button>
-        <button class="btn btn-ghost" id="btn-challenge-play">Play a Fresh Round to Challenge</button>
+        <button class="btn btn-ghost" id="btn-challenge-play">Play a Fresh Round</button>
         <button class="btn-text" data-nav="home">Not now</button>
       </div>
     </div>
@@ -175,7 +175,7 @@
       <div class="chrome-title">History</div>
     </div>
     <div class="history">
-      <div class="empty-note" id="storage-note" hidden>History can't save in this browser — check private browsing / cookie settings</div>
+      <div class="empty-note" id="storage-note" hidden>History can't save in this browser. Check your private-browsing and cookie settings.</div>
       <div class="stat-row">
         <div class="stat-box"><div class="num" id="stat-streak">0</div><div class="lbl">Day streak</div></div>
         <div class="stat-box"><div class="num" id="stat-best">—</div><div class="lbl">Best score</div></div>
@@ -191,7 +191,7 @@
           <span class="key"><span class="swatch sharp"></span>1–12</span>
           <span class="key"><span class="swatch shut"></span>Shut the Box</span>
         </div>
-        <div class="archive-note">Tap a dashed cell to replay a missed day — it counts toward your history and streak.</div>
+        <div class="archive-note">Tap a dashed cell to replay a missed day. It counts toward your history and streak.</div>
       </div>
       <div class="day-list" id="day-list"></div>
       <div class="transfer-entry"><button class="btn-text" id="btn-transfer">Transfer history</button></div>
@@ -206,7 +206,7 @@
     </div>
     <div class="intro" style="padding-top:8px;">
       <div class="challenge-panel">
-        <p>Move your daily history to another device with a code. Nothing is sent anywhere — <b>the code itself carries your history.</b></p>
+        <p>Move your daily history to another device with a code. Nothing is sent anywhere. <b>The code itself carries your history.</b></p>
       </div>
       <div class="btn-stack">
         <button class="btn btn-primary" id="btn-transfer-export">Send history to another device</button>
@@ -246,7 +246,7 @@
       <div class="challenge-panel">
         <label class="field-lbl" for="transfer-code-in">Paste the transfer code</label>
         <textarea class="transfer-code" id="transfer-code-in" spellcheck="false" placeholder="Paste the code from your other device" aria-describedby="transfer-error"></textarea>
-        <div class="empty-note" id="transfer-error" hidden>That code doesn’t look right — copy it again from the other device.</div>
+        <div class="empty-note" id="transfer-error" hidden>That code doesn’t look right. Copy it again from the other device.</div>
         <div class="btn-stack">
           <button class="btn btn-primary" id="btn-transfer-preview">Preview Merge</button>
         </div>
