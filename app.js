@@ -386,11 +386,11 @@ function shareTextFor(result, stats) {
   const flame = streakLine(loadHistory(), TODAY);
   const social = socialCopy(stats, result.score);
   const field = (result.mode === 'daily' && social && social.avg !== null)
-    ? '\nToday: ' + stats.plays + ' players · average ' + stats.avg
-      + (result.score < stats.avg ? ' — you beat it' : '')
+    ? '\nToday: ' + stats.plays + ' players, average ' + stats.avg
+      + (result.score < stats.avg ? '. You beat it.' : '')
     : '';
   if (result.perfect) return label + '\nShut the Box! Every tile down. Can you do the same?' + field + flame;
-  return label + '\n' + verdictOf(result.score) + ' — lower is better. Can you beat it?' + field + flame;
+  return label + '\n' + verdictOf(result.score) + '. Lower is better. Can you beat it?' + field + flame;
 }
 
 function streakLine(history, today) {
@@ -427,9 +427,9 @@ async function reportDailyResult(result) {
 // Pure copy formatting — no DOM. Returns null when there is nothing to show.
 function socialCopy(stats, myScore) {
   if (!stats || !stats.plays) return null;
-  if (stats.plays < 2) return { line: 'You’re the first to play today', tile: 'First in today', avg: null };
+  if (stats.plays < 2) return { line: 'You’re the first to play today', tile: 'First player today', avg: null };
   return {
-    line: stats.plays + ' playing today · average ' + stats.avg + (myScore < stats.avg ? ' — you’re ahead' : ''),
+    line: stats.plays + ' playing today, average ' + stats.avg + (myScore < stats.avg ? '. You’re ahead.' : ''),
     tile: 'Avg today ' + stats.avg + ' · ' + stats.plays + ' players',
     avg: stats.avg,
   };
@@ -473,7 +473,7 @@ function showResult(r) {
   } else {
     hl.textContent = 'Score ' + r.score;
     hl.className = 'result-headline';
-    el('result-sub').innerHTML = '<b>' + r.score + '</b> still open. Lower is better' + (r.mode === 'daily' ? ' — come back tomorrow.' : '. Keep rolling.');
+    el('result-sub').innerHTML = '<b>' + r.score + '</b> still open. Lower is better' + (r.mode === 'daily' ? '. Come back tomorrow.' : '. Keep rolling.');
   }
   renderScoreTile('st-eyebrow', 'st-score', 'st-verdict', 'st-streak', r, loadHistory());
   paintSocial(r);
@@ -524,7 +524,7 @@ async function shareOrCopy(title, text, url) {
   }
   const full = text + (url ? '\n' + url : '');
   const ok = await copyText(full);
-  toast(ok ? 'Copied to clipboard' : 'Copy failed — long-press to copy');
+  toast(ok ? 'Copied to clipboard' : 'Copy failed. Long-press to copy.');
   return ok;
 }
 
@@ -543,7 +543,7 @@ let challengeSource = null; // result being challenged with
 function openChallengeIntro(source) {
   challengeSource = source;
   el('challenge-from-summary').innerHTML = source
-    ? ('You’ll challenge with: <b>' + (source.perfect ? 'Shut the Box!' : verdictOf(source.score)) + '</b> on ' + (source.day ? 'Day ' + source.day : 'a friendly round') + '.')
+    ? ('Your challenge: <b>' + (source.perfect ? 'Shut the Box!' : verdictOf(source.score)) + '</b> on ' + (source.day ? 'Day ' + source.day : 'a friendly round') + '.')
     : '';
   el('sender-name').value = loadName();
   showScreen('challenge');
@@ -575,7 +575,7 @@ el('btn-send-challenge').addEventListener('click', () => {
   });
   const label = challengeSource.day ? 'Day ' + challengeSource.day : 'a friendly round';
   const text = 'I went ' + (challengeSource.perfect ? 'Shut the Box!' : verdictOf(challengeSource.score)) +
-    ' on Shut the Box · ' + label + '. Same dice, one shot — beat me:';
+    ' on Shut the Box · ' + label + '. Same dice, one shot. Beat me:';
   shareOrCopy('Shut the Box — Challenge', text, url);
 });
 
@@ -695,12 +695,12 @@ function renderHistory() {
       const cell = document.createElement(playable ? 'button' : 'div');
       if (playable) {
         cell.type = 'button';
-        cell.setAttribute('aria-label', 'Replay the daily challenge from ' + ds + ' · Day ' + dayNumber(ds));
+        cell.setAttribute('aria-label', 'Replay the daily challenge from ' + formatDateShort(ds) + ' · Day ' + dayNumber(ds));
         cell.addEventListener('click', () => startGame('daily', ds, dayNumber(ds)));
       }
       cell.className = 'heat-cell ' + (r ? heatBucket(r) : (playable ? 'playable' : ''));
-      cell.title = ds + (r ? ' — ' + (r.score === 0 ? 'Shut the Box!' : r.score + ' open')
-        : playable ? ' — tap to replay this day' : '');
+      cell.title = ds + (r ? ': ' + (r.score === 0 ? 'Shut the Box!' : r.score + ' open')
+        : playable ? ': tap to replay this day' : '');
       if (ds === TODAY) cell.style.outline = '2px solid rgba(31,77,61,.5)';
       col.appendChild(cell);
     }
@@ -745,7 +745,7 @@ function openTransferExport() {
   const count = Object.keys(history).length;
   el('transfer-export-summary').innerHTML = count
     ? 'All <b>' + count + '</b> day' + (count === 1 ? '' : 's') + ' of your history fit in this code.'
-    : 'No history yet — play a daily challenge first.';
+    : 'No history yet. Play a daily challenge first.';
   el('transfer-code-out').value = encodeHistoryCode(history);
   showScreen('transfer-export');
 }
@@ -767,7 +767,7 @@ function previewTransferMerge() {
   incomingTransfer = incoming;
   const { added, bettered, unchanged } = previewCounts(loadHistory(), incoming);
   el('transfer-preview-summary').innerHTML = (!added && !bettered)
-    ? 'Nothing to merge — this code adds no new or better days.'
+    ? 'Nothing to merge. This code adds no new or better days.'
     : '<b>' + added + '</b> new day' + (added === 1 ? '' : 's') +
       ' and <b>' + bettered + '</b> better score' + (bettered === 1 ? '' : 's') +
       ' will be added. Your best score for each day always wins.' +
@@ -800,10 +800,10 @@ el('btn-transfer-export-back-text').addEventListener('click', () => showScreen('
 el('btn-transfer-import-back').addEventListener('click', () => showScreen('transfer'));
 el('btn-transfer-copy').addEventListener('click', async () => {
   const ok = await copyText(el('transfer-code-out').value);
-  toast(ok ? 'Code copied' : 'Copy failed — long-press to copy');
+  toast(ok ? 'Code copied' : 'Copy failed. Long-press to copy.');
 });
 el('btn-transfer-share').addEventListener('click', () => {
-  shareOrCopy('Shut the Box — History Transfer',
+  shareOrCopy('Shut the Box: History Transfer',
     'Here is my Shut the Box history code. Paste it on your device to bring my history over:\n\n' + el('transfer-code-out').value);
 });
 el('btn-transfer-preview').addEventListener('click', previewTransferMerge);
